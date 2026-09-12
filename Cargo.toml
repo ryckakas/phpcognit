@@ -1,0 +1,45 @@
+[package]
+name = "phpcognit"
+version = "0.1.0"
+edition = "2021"
+# Floor is set by tree-sitter-language, not by anything this crate does.
+# The `msrv` CI job reads this value, so it is a tested claim rather than a hope.
+rust-version = "1.90"
+description = "Cognitive complexity linter for PHP, as a single static binary"
+license = "MIT"
+repository = "https://github.com/ryckakas/phpcognit"
+keywords = ["php", "linter", "static-analysis", "complexity", "tree-sitter"]
+categories = ["development-tools"]
+
+[lib]
+name = "phpcognit"
+path = "src/lib.rs"
+
+[[bin]]
+name = "phpcognit"
+path = "src/main.rs"
+
+[dependencies]
+tree-sitter = "0.27"
+tree-sitter-php = "0.24"
+clap = { version = "4", features = ["derive"] }
+ignore = "0.4"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+# Group lints carry a lower priority so that individual `allow`s below can
+# override them; without the explicit priority Cargo rejects the combination.
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+unreachable_pub = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }

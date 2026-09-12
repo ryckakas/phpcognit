@@ -1,0 +1,11 @@
+# Only options that are a deliberate choice — defaults are left unstated so this
+# file stays a record of decisions rather than a copy of rustfmt's manual.
+
+edition = "2021"
+
+# The test matrix builds on Windows; pinning line endings keeps `--check` from
+# failing there on checkout conversion alone.
+newline_style = "Unix"
+
+use_field_init_shorthand = true
+use_try_shorthand = true

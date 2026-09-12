@@ -1,0 +1,22 @@
+version: 2
+
+# The grammar-guard test exists precisely to catch a tree-sitter-php upgrade
+# renaming a node, so dependency PRs are where it earns its keep.
+#
+# Cooldown holds a release for three days before proposing it, which is long
+# enough for a bad publish to be yanked before it costs a CI run.
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 3
