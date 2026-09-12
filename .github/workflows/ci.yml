@@ -59,7 +59,7 @@ jobs:
         run: npm test
 
       - name: Package
-        run: npx --yes @vscode/vsce package --allow-missing-repository --out /tmp/extension.vsix
+        run: npx --yes @vscode/vsce package --out /tmp/extension.vsix
 
   test:
     # The selling point of this tool is one binary that runs anywhere, so the
