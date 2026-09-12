@@ -36,6 +36,13 @@ No runtime, no toolchain, no Composer — one binary.
 brew install ryckakas/tap/phpcognit
 ```
 
+**npm** — or run it without installing anything, which is usually what you want in CI
+
+```bash
+npx phpcognit --over 15 src/     # no install
+npm install -g phpcognit         # or install it
+```
+
 **Windows**
 
 ```powershell
