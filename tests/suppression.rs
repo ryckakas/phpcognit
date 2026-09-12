@@ -138,6 +138,55 @@ class Example {
     assert_eq!(untouched.suppression, Suppression::None);
 }
 
+/// `eslint-disable-line` and `phpcs:ignore` have trained people to reach for the
+/// end of the signature line, so all three spellings of "trailing" work.
+#[test]
+fn a_marker_trailing_the_signature_suppresses() {
+    let cases = [
+        "public function target($a, $b) // phpcognit-ignore: after params\n{",
+        "public function target($a, $b): void // phpcognit-ignore: after return type\n{",
+        "public function target($a, $b) { // phpcognit-ignore: after brace",
+    ];
+
+    for opening in cases {
+        let source =
+            format!("<?php\nclass Example {{\n    {opening}\n        {TANGLED_BODY}\n    }}\n}}\n");
+        let finding = only(&source);
+
+        assert!(
+            matches!(finding.suppression, Suppression::Reasoned(_)),
+            "expected suppression for:\n{source}\ngot {:?}",
+            finding.suppression
+        );
+    }
+}
+
+#[test]
+fn a_trailing_marker_without_a_reason_is_refused() {
+    let source = format!(
+        "<?php\nclass Example {{\n    public function target($a, $b) // phpcognit-ignore\n    {{\n        {TANGLED_BODY}\n    }}\n}}\n"
+    );
+
+    assert_eq!(only(&source).suppression, Suppression::MissingReason);
+}
+
+/// Descent stops at the first node on a later row, so a marker written inside
+/// the body cannot silence the function that contains it.
+#[test]
+fn a_marker_inside_the_body_does_not_suppress() {
+    let source = "<?php
+class Example {
+    public function target($a, $b)
+    {
+        // phpcognit-ignore: too late, this is the body
+        if ($a) { if ($b) { echo 1; } }
+    }
+}
+";
+
+    assert_eq!(only(source).suppression, Suppression::None);
+}
+
 #[test]
 fn suppression_does_not_change_the_score() {
     let plain = only(&with_leading("// ordinary"));

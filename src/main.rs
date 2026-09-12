@@ -76,8 +76,16 @@ fn main() -> ExitCode {
     };
 
     let mut findings: Vec<(PathBuf, Finding)> = Vec::new();
+    let mut scan = Scan::default();
     for path in &args.paths {
-        collect(path, &mut parser, &mut findings);
+        scan.absorb(collect(path, &mut parser, &mut findings));
+    }
+
+    // A gate that could not read what it was pointed at must not report success;
+    // otherwise a renamed directory turns the check into a no-op that stays green.
+    if let Some(failure) = unusable_scan(&scan, &args) {
+        eprintln!("{failure}");
+        return ExitCode::FAILURE;
     }
 
     findings.sort_by(|left, right| {
@@ -141,6 +149,27 @@ fn main() -> ExitCode {
     }
 
     ExitCode::FAILURE
+}
+
+fn unusable_scan(scan: &Scan, args: &Args) -> Option<String> {
+    if scan.errors > 0 {
+        return Some(format!(
+            "{} path(s) could not be read; refusing to report a clean run",
+            scan.errors
+        ));
+    }
+
+    if scan.files == 0 {
+        let paths: Vec<String> = args
+            .paths
+            .iter()
+            .map(|path| path.display().to_string())
+            .collect();
+
+        return Some(format!("no PHP files found under {}", paths.join(", ")));
+    }
+
+    None
 }
 
 fn load_baseline(path: &Path) -> io::Result<Option<Baseline>> {
@@ -235,12 +264,32 @@ fn print_json(
     }
 }
 
-fn collect(root: &Path, parser: &mut tree_sitter::Parser, findings: &mut Vec<(PathBuf, Finding)>) {
+#[derive(Debug, Default, Clone, Copy)]
+struct Scan {
+    files: usize,
+    errors: usize,
+}
+
+impl Scan {
+    fn absorb(&mut self, other: Self) {
+        self.files += other.files;
+        self.errors += other.errors;
+    }
+}
+
+fn collect(
+    root: &Path,
+    parser: &mut tree_sitter::Parser,
+    findings: &mut Vec<(PathBuf, Finding)>,
+) -> Scan {
+    let mut scan = Scan::default();
+
     for entry in WalkBuilder::new(root).build() {
         let entry = match entry {
             Ok(entry) => entry,
             Err(error) => {
                 eprintln!("{error}");
+                scan.errors += 1;
                 continue;
             }
         };
@@ -258,12 +307,17 @@ fn collect(root: &Path, parser: &mut tree_sitter::Parser, findings: &mut Vec<(Pa
             Ok(source) => source,
             Err(error) => {
                 eprintln!("{}: {error}", path.display());
+                scan.errors += 1;
                 continue;
             }
         };
+
+        scan.files += 1;
 
         for finding in phpcognit::analyze_source(parser, &source) {
             findings.push((path.to_path_buf(), finding));
         }
     }
+
+    scan
 }

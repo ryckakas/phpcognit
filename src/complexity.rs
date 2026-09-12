@@ -90,10 +90,16 @@ fn type_name(node: Node<'_>, src: &[u8]) -> Option<String> {
         .map(ToString::to_string)
 }
 
+fn suppression(node: Node<'_>, src: &[u8]) -> Suppression {
+    leading_suppression(node, src)
+        .or_else(|| trailing_suppression(node, src))
+        .unwrap_or(Suppression::None)
+}
+
 /// Walks back over the declaration's leading trivia, so the marker works both
 /// directly above the function and inside its docblock. Attributes are stepped
 /// over; anything else ends the search.
-fn suppression(node: Node<'_>, src: &[u8]) -> Suppression {
+fn leading_suppression(node: Node<'_>, src: &[u8]) -> Option<Suppression> {
     let mut sibling = node.prev_sibling();
 
     while let Some(current) = sibling {
@@ -104,7 +110,7 @@ fn suppression(node: Node<'_>, src: &[u8]) -> Suppression {
                     .ok()
                     .and_then(parse_suppression_marker)
                 {
-                    return found;
+                    return Some(found);
                 }
             }
             kinds::ATTRIBUTE_LIST => {}
@@ -114,7 +120,38 @@ fn suppression(node: Node<'_>, src: &[u8]) -> Suppression {
         sibling = current.prev_sibling();
     }
 
-    Suppression::None
+    None
+}
+
+/// The signature line itself, which is where `eslint-disable-line` and
+/// `phpcs:ignore` have taught people to reach. Descent stops at the first node
+/// starting on a later row, so the body is never searched.
+fn trailing_suppression(node: Node<'_>, src: &[u8]) -> Option<Suppression> {
+    fn on_row(node: Node<'_>, row: usize, src: &[u8]) -> Option<Suppression> {
+        if node.start_position().row > row {
+            return None;
+        }
+
+        if node.kind() == kinds::COMMENT && node.start_position().row == row {
+            if let Some(found) = node.utf8_text(src).ok().and_then(parse_suppression_marker) {
+                return Some(found);
+            }
+        }
+
+        let mut cursor = node.walk();
+        let found = node
+            .children(&mut cursor)
+            .find_map(|child| on_row(child, row, src));
+        found
+    }
+
+    let row = node.start_position().row;
+    let mut cursor = node.walk();
+    let found = node
+        .children(&mut cursor)
+        .find_map(|child| on_row(child, row, src));
+
+    found
 }
 
 fn parse_suppression_marker(comment: &str) -> Option<Suppression> {
