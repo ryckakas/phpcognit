@@ -6,7 +6,7 @@ Marks functions whose cognitive complexity is too high, as you open and save fil
 PHP runtime, no Composer entry, nothing added to your project — the analyser is a Rust
 binary that ships with the extension.
 
-![A PHP method flagged with a cognitive complexity of 44](images/diagnostic.png)
+![A PHP method flagged with a cognitive complexity of 44](https://raw.githubusercontent.com/ryckakas/phpcognit/main/editors/vscode/images/diagnostic.png)
 
 ## Why cognitive complexity
 
