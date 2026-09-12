@@ -280,6 +280,14 @@ builds every target, generates the installers and publishes a GitHub Release. Pr
 with `dist plan`. `.github/workflows/release.yml` is generated — edit
 `dist-workspace.toml` and re-run `dist generate` rather than hand-editing it.
 
+**The VS Code extension versions independently** of the CLI, and the two numbers are not
+expected to match. It depends on `phpcognit` through npm on a caret range, so it picks up
+CLI releases without a bump of its own; its version moves only when the extension itself
+changes. That includes listing-only edits, because the Marketplace bundles the README
+into the package and refuses a version it already holds. Publishing is manual — `vsce`
+needs an Azure DevOps PAT, which now requires a paid subscription, so the VSIX is
+uploaded by hand.
+
 </details>
 
 ## Licence
