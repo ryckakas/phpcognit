@@ -1,6 +1,6 @@
 [package]
 name = "phpcognit"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 # Floor is set by tree-sitter-language, not by anything this crate does.
 # The `msrv` CI job reads this value, so it is a tested claim rather than a hope.
