@@ -32,6 +32,35 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+  extension:
+    # Runs unconditionally rather than behind a paths filter: a required check
+    # that gets skipped blocks merges rather than passing them.
+    name: VS Code extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -p . --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        run: npx --yes @vscode/vsce package --allow-missing-repository --out /tmp/extension.vsix
+
   test:
     # The selling point of this tool is one binary that runs anywhere, so the
     # matrix is load-bearing rather than ceremony: it is the claim under test.

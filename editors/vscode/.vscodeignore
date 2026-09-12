@@ -1,0 +1,12 @@
+src/**
+tsconfig.json
+.vscodeignore
+.vscode/**
+**/*.map
+
+# Shipped as a devDependency of the phpcognit package via its npm-shrinkwrap,
+# which npm installs regardless. Eight megabytes of formatter nobody runs here.
+node_modules/phpcognit/node_modules/prettier/**
+
+# tests are compiled alongside the sources but have no business shipping
+out/**/*.test.js
