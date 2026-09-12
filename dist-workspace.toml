@@ -15,5 +15,10 @@ installers = ["shell", "powershell", "homebrew", "npm"]
 tap = "ryckakas/homebrew-tap"
 # npm publishing needs an NPM_TOKEN secret.
 publish-jobs = ["homebrew", "npm"]
+# A published shrinkwrap makes npm materialise the generated package's whole
+# dependency tree for consumers, dev entries included — which shipped ~8 MB of
+# prettier to everyone running `npx phpcognit`. Without it, npm resolves the one
+# real dependency normally.
+npm-shrinkwrap = false
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]

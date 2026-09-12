@@ -1,0 +1,67 @@
+{
+  "name": "phpcognit",
+  "displayName": "phpcognit",
+  "description": "Cognitive complexity diagnostics for PHP",
+  "version": "0.2.0",
+  "publisher": "ryckakas",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryckakas/phpcognit.git",
+    "directory": "editors/vscode"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "php",
+    "linter",
+    "complexity",
+    "cognitive-complexity"
+  ],
+  "activationEvents": [
+    "onLanguage:php"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "phpcognit",
+      "properties": {
+        "phpcognit.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Report cognitive complexity for PHP files."
+        },
+        "phpcognit.path": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a phpcognit binary. Leave empty to use the bundled one, falling back to PATH."
+        },
+        "phpcognit.threshold": {
+          "type": "number",
+          "default": 15,
+          "minimum": 1,
+          "description": "Report functions scoring above this. Matches the CLI default."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "vscode:prepublish": "npm run compile",
+    "test": "npm run compile && node --test \"out/*.test.js\""
+  },
+  "dependencies": {
+    "phpcognit": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.6.0"
+  }
+}
