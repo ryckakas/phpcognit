@@ -1,6 +1,9 @@
 # phpcognit
 
-Cognitive complexity linter for PHP, shipped as a single static binary.
+**Find the PHP that's hard to read — in seconds, across your whole codebase.**
+
+A cognitive complexity linter written in Rust. One static binary, no PHP runtime, no
+Composer entry, nothing added to your project. Scans 600,000 lines in **1.5 seconds**.
 
 [![CI](https://github.com/ryckakas/phpcognit/actions/workflows/ci.yml/badge.svg)](https://github.com/ryckakas/phpcognit/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/phpcognit?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/phpcognit)
@@ -8,84 +11,34 @@ Cognitive complexity linter for PHP, shipped as a single static binary.
 ![Rust 1.90+](https://img.shields.io/badge/rust-1.90%2B-CE422B)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
+## Why this one
+
+- **8× faster than the alternatives.** 6,266 files, 613,458 lines, **1.54s**. The
+  PHPStan-based option takes 12.77s on the same codebase.
+- **Nothing to install into your project.** No `composer require --dev`, no lockfile
+  churn, no version conflict with your PHPStan or PHP_CodeSniffer. One pinned binary
+  scores PHP 7.x and 8.x alike — ideal for a monorepo running several versions.
+- **Never executes your code.** Syntax-only: no autoloader, no reflection. Safe to point
+  at third-party or untrusted source.
+- **Correct where others aren't.** Three independent implementations agree with
+  phpcognit on the specification's worked examples; one lineage doesn't. See below.
+- **Adoptable on day one.** Baseline your existing violations and gate on regressions,
+  instead of being told to fix 180 functions before you can turn it on.
+
 Cognitive complexity measures how hard code is to *read*, where cyclomatic complexity
 measures how hard it is to *test*. A `switch` with twenty arms is cyclomatically awful
 and cognitively fine; three nested `if`s are the reverse. The metric is
 [SonarSource's](https://www.sonarsource.com/resources/cognitive-complexity/).
 
-No PHP runtime, no Composer entry, no PHPStan. The scanned code is never executed —
-analysis is syntax-only, so it is safe to point at third-party source.
-
-<details>
-<summary><b>Why another one</b> — PHP already has several</summary>
-
-`TomasVotruba/cognitive-complexity` and `Artemeon/cognitive-complexity` are PHPStan
-extensions, `Rarst/phpcs-cognitive-complexity` is a PHP_CodeSniffer sniff, and
-`ncac/php-cognitive-complexity` is a Composer CLI. All of them run inside the PHP
-process of the project being analysed. This one doesn't:
-
-- **No PHP-version coupling.** One pinned binary scores PHP 7.x and 8.x alike, so a
-  monorepo running several versions needs one tool rather than one per service.
-- **Nothing added to the target repo.** No `composer require --dev`, no lockfile churn,
-  no version conflict with the project's own PHPStan or PHP_CodeSniffer.
-- **Never executes what it scans.** No autoloader, no reflection.
-- **Right-sized.** Cognitive complexity is purely syntactic — nesting and operator
-  sequences, no type resolution. A full semantic engine is more machinery than the
-  metric needs.
-
-</details>
-
-<details open>
-<summary><b>How it compares</b> — scores and speed against the other PHP implementations</summary>
-
-Measured against 6,266 files / 613,458 lines of a real production PHP codebase, on an
-M-series Mac. Reproduce with the commands in `benchmark/`.
-
-**Scores.** Implementations of this metric do not all agree, so these cases have
-answers the specification determines. `a && b && c` scoring one increment and
-`a && b || c` scoring two are worked examples from SonarSource's own paper.
-
-| Case | Spec | phpcognit | ncac | Rarst | TomasVotruba¹ |
-| --- | --- | --- | --- | --- | --- |
-| `if`/`if`/`if` nested | 6 | 6 | 6 | 6 | 6 |
-| `if`/`elseif`/`else` | 3 | 3 | 3 | 3 | 3 |
-| `$a && $b && $c` (one run) | 2 | **2** | **2** | **2** | 3 |
-| `$a && $b \|\| $c` (two runs) | 3 | **3** | **3** | **3** | 2 |
-| two sibling `if`s at depth 2 | 9 | **9** | **9** | **9** | 7 |
-
-¹ `Artemeon/cognitive-complexity` is a fork of this package — same file tree, same class
-names — and returns identical numbers, so the two are one implementation rather than two
-data points.
-
-**Speed.**
-
-| Tool | Time | Also does |
-| --- | --- | --- |
-| phpcognit | **1.54s** | — |
-| `ncac/php-cognitive-complexity` | 3.31s | baselines, several report formats |
-| `Rarst/phpcs-cognitive-complexity` | 9.63s | runs inside an existing PHP_CodeSniffer setup |
-| `tomasvotruba/cognitive-complexity` | 12.77s | full PHPStan analysis — types, reflection |
-
-Read the speed column with care. Only the complexity rule was enabled for the PHPStan
-run, but a semantic engine still has to boot, autoload and reflect; it is answering a
-harder question than the others. And 2.1× against `ncac` is a narrow margin for a native
-binary versus PHP — that one is fast.
-
-The gap worth attention is the scores column, not the clock. Three implementations built
-on three different parsers agree; one lineage differs on operator runs and on sibling
-statements at depth.
-
-</details>
-
 ## Install
 
 ```bash
 brew install ryckakas/tap/phpcognit    # macOS and Linux
-npx phpcognit --over 15 src/           # or no install at all
+npx phpcognit --over 15 src/           # or nothing at all
 ```
 
 <details>
-<summary>Windows, manual download, install script</summary>
+<summary>Windows, npm global, manual download, install script</summary>
 
 ```powershell
 powershell -ExecutionPolicy Bypass -c "irm https://github.com/ryckakas/phpcognit/releases/latest/download/phpcognit-installer.ps1 | iex"
@@ -98,8 +51,8 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ryckakas/phpcognit/rele
 
 Or take the archive for your platform from
 [Releases](https://github.com/ryckakas/phpcognit/releases/latest), check it against the
-published SHA-256, and put `phpcognit` on your `PATH`. Builds cover macOS (Apple
-Silicon and Intel), Linux (x86-64 and arm64), and Windows (x86-64).
+published SHA-256, and put `phpcognit` on your `PATH`. Builds cover macOS (Apple Silicon
+and Intel), Linux (x86-64 and arm64), and Windows (x86-64).
 
 </details>
 
@@ -112,12 +65,16 @@ phpcognit --all src/            # every function, ranked
 phpcognit --format json src/    # for editors and CI
 ```
 
-Output is `score  path:line  Class::method`, worst first. A clean run prints nothing
-and exits 0, so stdout stays usable in a pipeline.
+```text
+  102  src/Checkout/PriceCalculator.php:212  PriceCalculator::applyDiscounts
+   68  src/Import/CsvRowMapper.php:88  CsvRowMapper::mapRow
+   51  src/Order/OrderRepository.php:344  OrderRepository::syncLineItems
+```
 
-Exit code is 1 on a breach — and also when the scan itself could not be trusted: an
-unreadable path, or paths matching no PHP at all. A gate that silently passes because a
-directory was renamed is worse than no gate.
+Ranked worst-first. A clean run prints nothing and exits 0, so stdout stays usable in a
+pipeline. Exit code is 1 on a breach — and also when the scan itself couldn't be
+trusted, like an unreadable path or one matching no PHP at all. A gate that silently
+passes because a directory got renamed is worse than no gate.
 
 <details>
 <summary>JSON shape</summary>
@@ -131,9 +88,9 @@ should read stdout and ignore the exit status.
   "breaches": 1,
   "findings": [
     {
-      "path": "src/Controller/Component/FormSecurityComponent.php",
-      "line": 135,
-      "name": "FormSecurityComponent::getFormAccessibleFields",
+      "path": "src/Checkout/PriceCalculator.php",
+      "line": 212,
+      "name": "PriceCalculator::applyDiscounts",
       "score": 68
     }
   ]
@@ -142,24 +99,64 @@ should read stdout and ignore the exit status.
 
 </details>
 
+<details open>
+<summary><b>Benchmarks</b> — speed and correctness against every other PHP implementation</summary>
+
+Measured over 6,266 files and 613,458 lines of a real production PHP codebase, on an
+M-series Mac. Reproduce it yourself with `./benchmark/run.sh`.
+
+### Speed
+
+| Tool | Time | |
+| --- | --- | --- |
+| **phpcognit** | **1.54s** | — |
+| `ncac/php-cognitive-complexity` | 3.31s | 2.1× slower |
+| `Rarst/phpcs-cognitive-complexity` | 9.63s | 6.3× slower |
+| `tomasvotruba/cognitive-complexity` | 12.77s | 8.3× slower |
+
+The PHPStan option is running a semantic engine — types and reflection — so it is doing
+more for that time, even with only the complexity rule enabled.
+
+### Correctness
+
+Implementations of this metric disagree with each other. These cases have answers the
+specification determines; `a && b && c` scoring one increment and `a && b || c` scoring
+two are worked examples from SonarSource's own paper.
+
+| Case | Spec | phpcognit | ncac | Rarst | TomasVotruba¹ |
+| --- | --- | --- | --- | --- | --- |
+| `if`/`if`/`if` nested | 6 | ✅ 6 | 6 | 6 | 6 |
+| `if`/`elseif`/`else` | 3 | ✅ 3 | 3 | 3 | 3 |
+| `$a && $b && $c` (one run) | 2 | ✅ **2** | 2 | 2 | ❌ 3 |
+| `$a && $b \|\| $c` (two runs) | 3 | ✅ **3** | 3 | 3 | ❌ 2 |
+| two sibling `if`s at depth 2 | 9 | ✅ **9** | 9 | 9 | ❌ 7 |
+
+Three implementations built on three different parsers agree. One lineage scores
+operator runs backwards and under-counts sibling statements at depth — on one real
+method that was the difference between **51 and 27**.
+
+¹ `Artemeon/cognitive-complexity` is a fork of this package — same file tree, same class
+names — and returns identical numbers, so the two count as one implementation.
+
+</details>
+
 ## Adopting on an existing codebase
 
-Any codebase predating the tool has violations — one we tested against had 180. Nobody
-refactors 180 functions to adopt a linter, so record them and gate on regressions:
+Any codebase predating the tool has violations — the one benchmarked above had 180.
+Nobody refactors 180 functions to adopt a linter, so record them and gate on
+regressions:
 
 ```bash
 phpcognit --write-baseline src/    # records today's findings, exits 0
 phpcognit src/                     # fails only on new or worsened functions
 ```
 
-Commit `.phpcognit-baseline.json`; it is picked up automatically wherever it exists, so
+Commit `.phpcognit-baseline.json`; it's picked up automatically wherever it exists, so
 CI, hooks and your terminal agree without repeating flags.
 
 Entries are keyed by function **name, not line**, which matters more than it sounds: a
-grandfathered file does not become a hiding place. Add a complex new method to an
-already-recorded file and it is reported, while the old ones around it stay accepted.
-There is deliberately no ignore-by-file option — the accepted set stays a dated,
-reviewable list rather than a glob that quietly widens.
+grandfathered file doesn't become a hiding place. Add a complex new method to an
+already-recorded file and it's reported, while the old ones around it stay accepted.
 
 ## Suppressing one function
 
@@ -185,13 +182,19 @@ in between are stepped over.
 public function dispatch(string $event): void // phpcognit-ignore: flat dispatch table
 ```
 
-It has to be on the signature. A marker written inside the body is not a suppression,
-so one comment can never silence the function it sits in.
+It has to be on the signature. A marker written inside the body is not a suppression, so
+one comment can never silence the function it sits in.
 
 Suppression hides a finding; it never changes a score. `--all` still shows the real
 number.
 
 </details>
+
+## VS Code
+
+The extension in [`editors/vscode`](editors/vscode) marks functions above the threshold
+as you work. It shows exactly what CI would fail on — baselined and suppressed findings
+stay hidden, so editor and pipeline never disagree.
 
 <details>
 <summary><b>How the score is built</b></summary>
@@ -213,8 +216,8 @@ flow-breaker sits inside other flow-breakers.
 | Direct recursion | +1 | no |
 | Closure, arrow fn, nested function | — | yes |
 
-`elseif` takes a flat increment deliberately: a long chain reads linearly, so
-penalising it for depth would misrepresent it.
+`elseif` takes a flat increment deliberately: a long chain reads linearly, so penalising
+it for depth would misrepresent it.
 
 Boolean operators cost per *run*, not per operator — the cost is in the switching:
 
@@ -231,16 +234,15 @@ $a && ($b || $c)            // +2  parentheses start a fresh run
 - `and` / `or` normalise onto `&&` / `||` for run-counting; `xor` is its own operator.
 - `elseif` and `else if` score identically, despite different parse shapes.
 - `break N` / `continue N` are PHP's analogue of the labelled break.
-- Recursion is detected only through direct syntactic self-reference (`f()`,
-  `$this->f()`, `self::f()`). Dispatch through a variable needs symbol resolution and
-  is not guessed at.
+- Recursion is detected through direct syntactic self-reference (`f()`, `$this->f()`,
+  `self::f()`). Dispatch through a variable needs symbol resolution and is not guessed at.
 
 </details>
 
 <details>
 <summary><b>Architecture and development</b></summary>
 
-```
+```text
 src/
 ├── complexity.rs   the scorer: parsed tree in, scores out. no I/O, no config
 ├── baseline.rs     recorded scores, and what counts as a regression
@@ -256,7 +258,7 @@ tests/
 ```
 
 `complexity.rs` is deliberately free of filesystem and CLI concerns, so it can be unit
-tested directly and reused as a library.
+tested directly and reused as a library. Parsing is [tree-sitter](https://tree-sitter.github.io).
 
 Building needs Rust 1.90 or newer via [rustup](https://rustup.rs) — a floor set by
 `tree-sitter-language`, not by this crate, and one CI builds against on every pull
@@ -270,9 +272,8 @@ cargo test --all-features
 ```
 
 Lint configuration lives in `Cargo.toml` under `[lints]` rather than `#![deny]`
-attributes, so editors, `cargo build` and CI all see the same rules. Tests run on
-Linux, macOS and Windows — the matrix is testing the product claim, not decorating a
-badge.
+attributes, so editors, `cargo build` and CI all see the same rules. Tests run on Linux,
+macOS and Windows.
 
 **Releasing** is [`dist`](https://github.com/axodotdev/cargo-dist): pushing a `v*` tag
 builds every target, generates the installers and publishes a GitHub Release. Preview
