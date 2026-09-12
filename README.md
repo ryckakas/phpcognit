@@ -2,6 +2,11 @@
 
 Cognitive complexity linter for PHP, shipped as a single static binary.
 
+[![CI](https://github.com/ryckakas/phpcognit/actions/workflows/ci.yml/badge.svg)](https://github.com/ryckakas/phpcognit/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/phpcognit?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/phpcognit)
+![Rust 1.90+](https://img.shields.io/badge/rust-1.90%2B-CE422B)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
 Cognitive complexity measures how hard code is to *read*, where cyclomatic complexity
 measures how hard it is to *test*. A `switch` with twenty arms is cyclomatically awful
 and cognitively fine; three nested `if`s are the reverse. The metric is
