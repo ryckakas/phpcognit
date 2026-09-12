@@ -28,12 +28,39 @@ This one doesn't:
 
 ## Install
 
-Requires Rust 1.90 or newer (via [rustup](https://rustup.rs)). The floor is set by
-`tree-sitter-language`, not by anything this crate does, and CI tests it rather than
-assuming it.
+No runtime, no toolchain, no Composer — one binary.
+
+**Homebrew** (macOS and Linux)
 
 ```bash
-cargo install --path .
+brew install ryckakas/tap/phpcognit
+```
+
+**Windows**
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/ryckakas/phpcognit/releases/latest/download/phpcognit-installer.ps1 | iex"
+```
+
+**Manual** — download the archive for your platform from
+[Releases](https://github.com/ryckakas/phpcognit/releases/latest), verify it against
+the published SHA-256, and put `phpcognit` somewhere on your `PATH`. Builds are
+provided for macOS (Apple Silicon and Intel), Linux (x86-64 and arm64), and
+Windows (x86-64).
+
+<details>
+<summary>Install script, if you prefer it</summary>
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/ryckakas/phpcognit/releases/latest/download/phpcognit-installer.sh | sh
+```
+
+</details>
+
+Verify it works:
+
+```bash
+phpcognit --version
 ```
 
 ## Usage
@@ -131,6 +158,15 @@ tested directly and reused as a library.
 
 ## Development
 
+Building from source needs Rust 1.90 or newer, via [rustup](https://rustup.rs). That
+floor comes from `tree-sitter-language` rather than from anything this crate does, and
+CI builds against it on every pull request so the number stays honest.
+
+```bash
+cargo build --release        # ./target/release/phpcognit
+cargo install --path .       # or put it on your PATH
+```
+
 The same three gates run locally and in CI on every pull request:
 
 ```bash
@@ -143,6 +179,20 @@ Lint configuration lives in `Cargo.toml` under `[lints]` rather than in `#![deny
 attributes, so editors, `cargo build`, and CI all see the same rules. Tests run on
 Linux, macOS, and Windows — the cross-platform matrix is testing the product claim,
 not decorating the badge.
+
+### Releasing
+
+Releases are cut by [`dist`](https://github.com/axodotdev/cargo-dist): pushing a
+`v*` tag builds every target, generates the installers, and publishes a GitHub
+Release. Preview what a tag would produce without pushing one:
+
+```bash
+dist plan
+```
+
+`.github/workflows/release.yml` is generated — edit `dist-workspace.toml` and re-run
+`dist generate` rather than hand-editing the workflow, or the next `dist` run will
+overwrite the changes.
 
 ## Licence
 

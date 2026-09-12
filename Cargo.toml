@@ -8,6 +8,7 @@ rust-version = "1.90"
 description = "Cognitive complexity linter for PHP, as a single static binary"
 license = "MIT"
 repository = "https://github.com/ryckakas/phpcognit"
+homepage = "https://github.com/ryckakas/phpcognit"
 keywords = ["php", "linter", "static-analysis", "complexity", "tree-sitter"]
 categories = ["development-tools"]
 
@@ -31,6 +32,11 @@ serde_json = "1.0.151"
 lto = true
 codegen-units = 1
 strip = true
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
 
 # Group lints carry a lower priority so that individual `allow`s below can
 # override them; without the explicit priority Cargo rejects the combination.
