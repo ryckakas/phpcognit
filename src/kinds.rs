@@ -40,11 +40,29 @@ pub const FUNCTION_CALL: &str = "function_call_expression";
 pub const MEMBER_CALL: &str = "member_call_expression";
 pub const SCOPED_CALL: &str = "scoped_call_expression";
 
-/// Scoring units: complexity is reported per named function and method.
-/// Closures nested inside one roll their score up into it, per the spec.
+pub const COMMENT: &str = "comment";
+pub const ATTRIBUTE_LIST: &str = "attribute_list";
+
+pub const CLASS_DECLARATION: &str = "class_declaration";
+pub const INTERFACE_DECLARATION: &str = "interface_declaration";
+pub const TRAIT_DECLARATION: &str = "trait_declaration";
+pub const ENUM_DECLARATION: &str = "enum_declaration";
+
+/// Closures nested inside a unit roll their score up into it, per the spec,
+/// so they are not units in their own right.
 #[must_use]
 pub fn is_scoring_unit(kind: &str) -> bool {
     matches!(kind, FUNCTION_DEFINITION | METHOD_DECLARATION)
+}
+
+/// Two classes in one file can each declare `process()`, so the enclosing type
+/// is what makes a finding addressable.
+#[must_use]
+pub fn is_type_declaration(kind: &str) -> bool {
+    matches!(
+        kind,
+        CLASS_DECLARATION | INTERFACE_DECLARATION | TRAIT_DECLARATION | ENUM_DECLARATION
+    )
 }
 
 /// Function-likes that raise the nesting level without scoring in their own right.

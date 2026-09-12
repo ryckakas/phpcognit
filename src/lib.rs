@@ -4,9 +4,11 @@
 //! parsed tree and returns per-function scores, with no filesystem or CLI
 //! coupling, so it can be embedded in other tooling.
 
+pub mod baseline;
 pub mod complexity;
 pub mod kinds;
 
+pub use baseline::Baseline;
 pub use complexity::{analyze, Finding};
 
 use tree_sitter::{LanguageError, Parser};

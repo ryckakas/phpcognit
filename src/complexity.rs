@@ -12,32 +12,62 @@ use tree_sitter::Node;
 
 use crate::kinds;
 
+/// A suppression is only honoured when it carries a reason. A bare marker is
+/// reported as [`Suppression::MissingReason`] rather than silently obeyed, so
+/// that silencing a finding stays a documented decision rather than a reflex.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Suppression {
+    None,
+    Reasoned(String),
+    MissingReason,
+}
+
+pub const SUPPRESSION_MARKER: &str = "phpcognit-ignore";
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Finding {
+    pub class: Option<String>,
     pub name: String,
     pub line: usize,
     pub score: u32,
+    pub suppression: Suppression,
+}
+
+impl Finding {
+    /// `Class::method`, or the bare name for a free function. This is the
+    /// identity a baseline records, so it deliberately excludes the line
+    /// number — otherwise every edit above a function would invalidate it.
+    #[must_use]
+    pub fn qualified_name(&self) -> String {
+        match &self.class {
+            Some(class) => format!("{class}::{}", self.name),
+            None => self.name.clone(),
+        }
+    }
 }
 
 #[must_use]
 pub fn analyze(tree: &tree_sitter::Tree, src: &[u8]) -> Vec<Finding> {
     let mut findings = Vec::new();
-    collect_units(tree.root_node(), src, &mut findings);
+    collect_units(tree.root_node(), src, None, &mut findings);
     findings
 }
 
-fn collect_units(node: Node<'_>, src: &[u8], findings: &mut Vec<Finding>) {
+fn collect_units(node: Node<'_>, src: &[u8], class: Option<&str>, findings: &mut Vec<Finding>) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         if kinds::is_scoring_unit(child.kind()) {
-            findings.push(score_unit(child, src));
+            findings.push(score_unit(child, src, class));
+        } else if kinds::is_type_declaration(child.kind()) {
+            let enclosing = type_name(child, src);
+            collect_units(child, src, enclosing.as_deref().or(class), findings);
         } else {
-            collect_units(child, src, findings);
+            collect_units(child, src, class, findings);
         }
     }
 }
 
-fn score_unit(node: Node<'_>, src: &[u8]) -> Finding {
+fn score_unit(node: Node<'_>, src: &[u8], class: Option<&str>) -> Finding {
     let name = unit_name(node, src);
     let mut score = 0;
 
@@ -46,9 +76,66 @@ fn score_unit(node: Node<'_>, src: &[u8]) -> Finding {
     }
 
     Finding {
+        class: class.map(ToString::to_string),
         name,
         line: node.start_position().row + 1,
         score,
+        suppression: suppression(node, src),
+    }
+}
+
+fn type_name(node: Node<'_>, src: &[u8]) -> Option<String> {
+    node.child_by_field_name("name")
+        .and_then(|name| name.utf8_text(src).ok())
+        .map(ToString::to_string)
+}
+
+/// Walks back over the declaration's leading trivia, so the marker works both
+/// directly above the function and inside its docblock. Attributes are stepped
+/// over; anything else ends the search.
+fn suppression(node: Node<'_>, src: &[u8]) -> Suppression {
+    let mut sibling = node.prev_sibling();
+
+    while let Some(current) = sibling {
+        match current.kind() {
+            kinds::COMMENT => {
+                if let Some(found) = current
+                    .utf8_text(src)
+                    .ok()
+                    .and_then(parse_suppression_marker)
+                {
+                    return found;
+                }
+            }
+            kinds::ATTRIBUTE_LIST => {}
+            _ => break,
+        }
+
+        sibling = current.prev_sibling();
+    }
+
+    Suppression::None
+}
+
+fn parse_suppression_marker(comment: &str) -> Option<Suppression> {
+    let after_marker = comment.split_once(SUPPRESSION_MARKER)?.1;
+
+    let Some(rest) = after_marker.strip_prefix(':') else {
+        return Some(Suppression::MissingReason);
+    };
+
+    let reason = rest
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .trim_end_matches("*/")
+        .trim();
+
+    if reason.is_empty() {
+        Some(Suppression::MissingReason)
+    } else {
+        Some(Suppression::Reasoned(reason.to_string()))
     }
 }
 
@@ -62,7 +149,6 @@ fn unit_name(node: Node<'_>, src: &[u8]) -> String {
 fn walk(node: Node<'_>, nesting: u32, unit: &str, src: &[u8], score: &mut u32) {
     let kind = node.kind();
 
-    // A closure raises nesting for everything inside it but costs nothing itself.
     if kinds::is_nested_function(kind) {
         walk_children(node, nesting + 1, unit, src, score);
         return;
@@ -74,7 +160,6 @@ fn walk(node: Node<'_>, nesting: u32, unit: &str, src: &[u8], score: &mut u32) {
             return;
         }
 
-        // Every one of these both scores and nests.
         kinds::CONDITIONAL_EXPRESSION
         | kinds::SWITCH_STATEMENT
         | kinds::MATCH_EXPRESSION
@@ -88,8 +173,8 @@ fn walk(node: Node<'_>, nesting: u32, unit: &str, src: &[u8], score: &mut u32) {
             return;
         }
 
-        // A jump out of more than one enclosing structure is PHP's analogue of
-        // the spec's labelled break. Plain `break;` reads linearly, so it's free.
+        // `break 2;` is PHP's analogue of the spec's labelled break; plain
+        // `break;` reads linearly, so it costs nothing.
         kinds::BREAK_STATEMENT | kinds::CONTINUE_STATEMENT => {
             if is_multi_level_jump(node, src) {
                 *score += 1;
