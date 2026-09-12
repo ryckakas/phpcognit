@@ -17,7 +17,7 @@ No PHP runtime, no Composer entry, no PHPStan. The scanned code is never execute
 analysis is syntax-only, so it is safe to point at third-party source.
 
 <details>
-<summary><b>Why another one</b> — PHP already has four</summary>
+<summary><b>Why another one</b> — PHP already has several</summary>
 
 `TomasVotruba/cognitive-complexity` and `Artemeon/cognitive-complexity` are PHPStan
 extensions, `Rarst/phpcs-cognitive-complexity` is a PHP_CodeSniffer sniff, and
@@ -32,6 +32,48 @@ process of the project being analysed. This one doesn't:
 - **Right-sized.** Cognitive complexity is purely syntactic — nesting and operator
   sequences, no type resolution. A full semantic engine is more machinery than the
   metric needs.
+
+</details>
+
+<details open>
+<summary><b>How it compares</b> — scores and speed against the other PHP implementations</summary>
+
+Measured against 6,266 files / 613,458 lines of a real production PHP codebase, on an
+M-series Mac. Reproduce with the commands in `benchmark/`.
+
+**Scores.** Implementations of this metric do not all agree, so these cases have
+answers the specification determines. `a && b && c` scoring one increment and
+`a && b || c` scoring two are worked examples from SonarSource's own paper.
+
+| Case | Spec | phpcognit | ncac | Rarst | TomasVotruba¹ |
+| --- | --- | --- | --- | --- | --- |
+| `if`/`if`/`if` nested | 6 | 6 | 6 | 6 | 6 |
+| `if`/`elseif`/`else` | 3 | 3 | 3 | 3 | 3 |
+| `$a && $b && $c` (one run) | 2 | **2** | **2** | **2** | 3 |
+| `$a && $b \|\| $c` (two runs) | 3 | **3** | **3** | **3** | 2 |
+| two sibling `if`s at depth 2 | 9 | **9** | **9** | **9** | 7 |
+
+¹ `Artemeon/cognitive-complexity` is a fork of this package — same file tree, same class
+names — and returns identical numbers, so the two are one implementation rather than two
+data points.
+
+**Speed.**
+
+| Tool | Time | Also does |
+| --- | --- | --- |
+| phpcognit | **1.54s** | — |
+| `ncac/php-cognitive-complexity` | 3.31s | baselines, several report formats |
+| `Rarst/phpcs-cognitive-complexity` | 9.63s | runs inside an existing PHP_CodeSniffer setup |
+| `tomasvotruba/cognitive-complexity` | 12.77s | full PHPStan analysis — types, reflection |
+
+Read the speed column with care. Only the complexity rule was enabled for the PHPStan
+run, but a semantic engine still has to boot, autoload and reflect; it is answering a
+harder question than the others. And 2.1× against `ncac` is a narrow margin for a native
+binary versus PHP — that one is fast.
+
+The gap worth attention is the scores column, not the clock. Three implementations built
+on three different parsers agree; one lineage differs on operator runs and on sibling
+statements at depth.
 
 </details>
 
