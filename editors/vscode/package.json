@@ -2,7 +2,7 @@
   "name": "phpcognit",
   "displayName": "phpcognit \u2014 PHP cognitive complexity",
   "description": "Flags PHP functions that are hard to read. Rust-powered, no PHP runtime required.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publisher": "RicardasKauneckas",
   "license": "MIT",
   "repository": {
