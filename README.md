@@ -79,8 +79,9 @@ phpcognit --all src/            # print every function, ranked
 phpcognit --format json src/    # machine-readable, for editors and CI
 ```
 
-Output is `score  path:line  name`, ranked worst-first. Exit code is 1 if anything
-exceeds the threshold, which is what makes it usable as a CI gate or pre-commit hook.
+Output is `score  path:line  Class::method`, ranked worst-first. Exit code is 1 if
+anything exceeds the threshold, which is what makes it usable as a CI gate or
+pre-commit hook.
 
 `--format json` emits the same data for tooling to consume. Note that the exit code
 still reflects the threshold, so a consumer that only wants the data should read
@@ -94,12 +95,56 @@ stdout and ignore the exit status:
     {
       "path": "src/Controller/Component/FormSecurityComponent.php",
       "line": 135,
-      "name": "getFormAccessibleFields",
+      "name": "FormSecurityComponent::getFormAccessibleFields",
       "score": 68
     }
   ]
 }
 ```
+
+## Adopting on an existing codebase
+
+Any codebase that predates the tool will have violations — one we tested against had
+180 above the default threshold. Nobody refactors 180 functions to adopt a linter, so
+record them and gate on regressions instead:
+
+```bash
+phpcognit --write-baseline src/    # records today's findings, exits 0
+phpcognit src/                     # passes; fails only on new or worsened functions
+```
+
+Commit `.phpcognit-baseline.json`. It is picked up automatically whenever it exists, so
+CI, hooks and your terminal agree without anyone repeating flags.
+
+The baseline records each function by **name, not by line**, which matters more than it
+sounds: a grandfathered file does not become a hiding place. Add a complex new method to
+an already-recorded file and it is reported, while the old methods around it stay
+accepted — and edits that shift line numbers never invalidate it.
+
+There is deliberately no ignore-by-file option: the accepted set stays a dated,
+reviewable list in version control rather than a glob that quietly widens.
+
+## Suppressing a single function
+
+Some code is irreducibly branchy — a hand-rolled parser, a flat dispatch table — and
+regenerating the whole baseline to accept one deliberate case would re-record every
+other drift along with it. Mark that function instead:
+
+```php
+// phpcognit-ignore: dispatch table; splitting it would obscure the mapping
+public function dispatch(string $event): void
+```
+
+The marker is read from the declaration's leading trivia, so it works directly above
+the function or inside its docblock, and attributes in between are stepped over.
+
+**The reason is mandatory.** A bare `// phpcognit-ignore` is refused, not obeyed: the
+finding is still reported and a line goes to stderr explaining why. That keeps
+suppression a decision someone wrote down and a reviewer can see in the diff, rather
+than a switch that silences a gate on the way past.
+
+Suppression hides a finding; it never changes a score. `--all` still shows the
+function at its real complexity.
 
 ## How the score is built
 
@@ -152,11 +197,14 @@ The specification predates modern PHP, so these are decisions this tool makes:
 ```
 src/
 ├── complexity.rs   the scorer: parsed tree in, scores out. no I/O, no config
+├── baseline.rs     recorded scores, and what counts as a regression
 ├── kinds.rs        every grammar node kind string, in one place
 ├── lib.rs          public API — the scorer is embeddable
 └── main.rs         CLI: file discovery, ranking, exit codes
 tests/
 ├── spec.rs         conformance table against the specification
+├── baseline.rs     grandfathering rules, including the new-function-in-old-file case
+├── suppression.rs  marker parsing, and that a marker cannot leak past its function
 └── grammar.rs      fails if a grammar upgrade renames a node out from under us
 ```
 
