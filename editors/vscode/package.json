@@ -1,8 +1,8 @@
 {
   "name": "phpcognit",
-  "displayName": "phpcognit",
-  "description": "Cognitive complexity diagnostics for PHP",
-  "version": "0.2.0",
+  "displayName": "phpcognit \u2014 PHP cognitive complexity",
+  "description": "Flags PHP functions that are hard to read. Rust-powered, no PHP runtime required.",
+  "version": "0.2.2",
   "publisher": "RicardasKauneckas",
   "license": "MIT",
   "repository": {
@@ -15,7 +15,8 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Linters"
+    "Linters",
+    "Programming Languages"
   ],
   "keywords": [
     "php",
