@@ -3,7 +3,7 @@
   "displayName": "phpcognit",
   "description": "Cognitive complexity diagnostics for PHP",
   "version": "0.2.0",
-  "publisher": "ryckakas",
+  "publisher": "RicardasKauneckas",
   "license": "MIT",
   "repository": {
     "type": "git",
