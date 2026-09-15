@@ -1,6 +1,6 @@
 # phpcognit
 
-<img src="docs/images/readme-hero.jpg" alt="phpcognit — PHP cognitive complexity linter" width="960">
+<img src="docs/images/readme-hero.jpg" alt="phpcognit — PHP cognitive complexity linter" width="720">
 
 **Find the PHP that's hard to read — in seconds, across your whole codebase.**
 
