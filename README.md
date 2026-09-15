@@ -1,5 +1,7 @@
 # phpcognit
 
+<img src="docs/images/readme-hero.jpg" alt="phpcognit — PHP cognitive complexity linter" width="960">
+
 **Find the PHP that's hard to read — in seconds, across your whole codebase.**
 
 A cognitive complexity linter written in Rust. One static binary, no PHP runtime, no
