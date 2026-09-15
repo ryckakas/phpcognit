@@ -1,0 +1,46 @@
+<svg viewBox="0 0 760 300" width="720" height="285" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Scan time, 6,266 files / 613,458 lines of PHP</title>
+  <desc id="desc">phpcognit 1.54 seconds. ncac/php-cognitive-complexity 3.31 seconds, 2.1 times slower. Rarst/phpcs-cognitive-complexity 9.63 seconds, 6.3 times slower. tomasvotruba/cognitive-complexity 12.77 seconds, 8.3 times slower.</desc>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
+    .cap   { fill: #52514e; font-size: 11px; }
+    .cat   { fill: #0b0b0b; font-size: 12.5px; }
+    .cat.hero { font-weight: 700; }
+    .val   { fill: #0b0b0b; font-size: 14px; font-weight: 600; }
+    .sub   { fill: #52514e; font-size: 11px; }
+    .tick  { fill: #898781; font-size: 11px; }
+    .grid  { stroke: #e1e0d9; stroke-width: 1; }
+  </style>
+
+  <text class="cap" x="235" y="22">6,266 files &#183; 613,458 lines &#183; M-series Mac</text>
+
+  <!-- gridlines: 0s / 5s / 10s / 15s -->
+  <line class="grid" x1="235" y1="45" x2="235" y2="228"/>
+  <line class="grid" x1="355" y1="45" x2="355" y2="228"/>
+  <line class="grid" x1="475" y1="45" x2="475" y2="228"/>
+  <line class="grid" x1="595" y1="45" x2="595" y2="228"/>
+  <text class="tick" x="235" y="242" text-anchor="middle">0</text>
+  <text class="tick" x="355" y="242" text-anchor="middle">5s</text>
+  <text class="tick" x="475" y="242" text-anchor="middle">10s</text>
+  <text class="tick" x="595" y="242" text-anchor="middle">15s</text>
+
+  <!-- phpcognit: 1.54s -->
+  <path d="M 235 60 L 268 60 Q 272 60 272 64 L 272 78 Q 272 82 268 82 L 235 82 Z" fill="#008300"/>
+  <text class="cat hero" x="227" y="75" text-anchor="end">phpcognit</text>
+  <text x="282" y="75"><tspan class="val">1.54s</tspan><tspan class="sub" dx="6">fastest</tspan></text>
+
+  <!-- ncac/php-cognitive-complexity: 3.31s -->
+  <path d="M 235 105 L 310 105 Q 314 105 314 109 L 314 123 Q 314 127 310 127 L 235 127 Z" fill="#898781"/>
+  <text class="cat" x="227" y="120" text-anchor="end">ncac/php-cognitive-complexity</text>
+  <text x="324" y="120"><tspan class="val">3.31s</tspan><tspan class="sub" dx="6">2.1&#215; slower</tspan></text>
+
+  <!-- Rarst/phpcs-cognitive-complexity: 9.63s -->
+  <path d="M 235 150 L 462 150 Q 466 150 466 154 L 466 168 Q 466 172 462 172 L 235 172 Z" fill="#898781"/>
+  <text class="cat" x="227" y="165" text-anchor="end">Rarst/phpcs-cognitive-complexity</text>
+  <text x="476" y="165"><tspan class="val">9.63s</tspan><tspan class="sub" dx="6">6.3&#215; slower</tspan></text>
+
+  <!-- tomasvotruba/cognitive-complexity: 12.77s -->
+  <path d="M 235 195 L 537 195 Q 541 195 541 199 L 541 213 Q 541 217 537 217 L 235 217 Z" fill="#898781"/>
+  <text class="cat" x="227" y="210" text-anchor="end">tomasvotruba/cognitive-complexity</text>
+  <text x="551" y="210"><tspan class="val">12.77s</tspan><tspan class="sub" dx="6">8.3&#215; slower</tspan></text>
+</svg>
